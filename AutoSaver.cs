@@ -37,7 +37,6 @@ public class AutoSaver : SonsMod
     public static bool CoroIsRunning = false;
     public static float floatValue;
     public static string playerGameName;
-    private static CoroutineToken autoSaveCoroutineToken;
 
 
     protected override void OnInitializeMod()
@@ -63,25 +62,6 @@ public class AutoSaver : SonsMod
         _returnedToTitle = false;
         Config.UpdateSettings();
 
-    }
-
-    public static CoroutineToken StartAutoSaveTimer()
-    {
-        if (autoSaveCoroutineToken == null)
-        {
-            //RLog.Msg("Starting AutoSaveTimer coro");
-            autoSaveCoroutineToken = AutoSaveTimer().RunCoro();
-        }
-        return autoSaveCoroutineToken;
-    }
-    public static void StopAutoSaveTimer()
-    {
-        if (autoSaveCoroutineToken != null)
-        {
-            //RLog.Msg("Stopping AutoSaveTimer coro");
-            autoSaveCoroutineToken.Stop();
-            autoSaveCoroutineToken = null;
-        }
     }
 
     public static IEnumerator RestoreSaveName()
