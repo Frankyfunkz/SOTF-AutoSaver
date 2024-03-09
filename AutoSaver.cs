@@ -37,6 +37,7 @@ public class AutoSaver : SonsMod
     public static bool CoroIsRunning = false;
     public static float floatValue;
     public static string playerGameName;
+    private static CoroutineToken autoSaveCoroutineToken;
 
 
     protected override void OnInitializeMod()
@@ -62,6 +63,25 @@ public class AutoSaver : SonsMod
         _returnedToTitle = false;
         Config.UpdateSettings();
 
+    }
+
+    public static CoroutineToken StartAutoSaveTimer()
+    {
+        if (autoSaveCoroutineToken == null)
+        {
+            //RLog.Msg("Starting AutoSaveTimer coro");
+            autoSaveCoroutineToken = AutoSaveTimer().RunCoro();
+        }
+        return autoSaveCoroutineToken;
+    }
+    public static void StopAutoSaveTimer()
+    {
+        if (autoSaveCoroutineToken != null)
+        {
+            //RLog.Msg("Stopping AutoSaveTimer coro");
+            autoSaveCoroutineToken.Stop();
+            autoSaveCoroutineToken = null;
+        }
     }
 
     public static IEnumerator RestoreSaveName()
@@ -174,7 +194,8 @@ public class AutoSaver : SonsMod
     {
         var saveType = GameSetupManager.GetSaveGameType();
         Sons.Save.GameState gameState = new();
-        string saveFolderOver = "C:/Users/gocre/AppData/LocalLow/Endnight/SonsOfTheForest/Saves/76561198022233208/" + saveType + "/0800842069";
+        var steamId = Sons.Save.SaveGameManager._steamUserSaveGameFolder;
+        string saveFolderOver = steamId + "/" + saveType + "/0800842069";
         gameState.SetGameName("AutoSave(OverWrite)");
         SaveGameManager.Save(saveFolderOver, "AutoSave(OverWrite)", false);
         RestoreSaveName().RunCoro();

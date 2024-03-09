@@ -2,9 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/ToniMacaroni/RedLoader/main/MetadataSchema.json",
   "id": "AutoSaver",
   "author": "Franky",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lets you AutoSave, timer of Save interval is configurable .",
   "gameVersion": "1.0.0",
   "type": "Mod",
-  "url": "..."
+  "url": "https://sotf-mods.com/mods/franky/autosaver"
 }
