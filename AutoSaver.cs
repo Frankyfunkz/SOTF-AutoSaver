@@ -3,6 +3,7 @@ using FrankyModMenu;
 using RedLoader;
 using Sons.Characters;
 using Sons.Gameplay.GameSetup;
+using Sons.Gui;
 using Sons.Save;
 using SonsSdk;
 using SUI;
@@ -28,8 +29,8 @@ public class AutoSaver : SonsMod
         // Uncomment this to automatically apply harmony patches in your assembly.
         //HarmonyPatchAll = true;
     }
-    
-    
+
+    public static bool _hasControl = false;
     public static bool AutoSaveTimerShouldRun = true;
     public static bool CoroShouldRestart = false;
     public static bool _firstStart = true;
@@ -50,7 +51,7 @@ public class AutoSaver : SonsMod
         // Do your mod initialization which involves game or sdk references here
         // This is for stuff like UI creation, event registration etc.
         AutoSaverUi.Create();
-        SettingsRegistry.CreateSettings(this, null, typeof(Config), callback: OnSettingsUiClosed);
+        //SettingsRegistry.CreateSettings(this, null, typeof(Config), callback: OnSettingsUiClosed);
     }
 
     protected override void OnGameStart()
@@ -58,10 +59,51 @@ public class AutoSaver : SonsMod
         // This is called once the player spawns in the world and gains control.
         Sons.Save.GameState gameState = new();
         playerGameName = gameState.GetGameName();
-        _firstStart = false;
-        _returnedToTitle = false;
-        Config.UpdateSettings();
+        WaitForLocalPlayer().RunCoro();
 
+    }
+
+    IEnumerator WaitForLocalPlayer()
+    {
+
+        static bool PlayerExists()
+        {
+            //RLog.Msg("waiting for LocalPlayer._instance...");
+            return LocalPlayer._instance != null;
+        }
+        //Wait until LocalPlayer._instance is not null
+        yield return CustomWaitUntil.WaitUntil(new Func<bool>(PlayerExists));
+        //RLog.Msg("LocalPlayer._instance is not null. Continuing...");
+
+
+        if (_hasControl == false)
+        {
+            //RLog.Msg("waiting for terrainOrflatcontact true, _hasControl is " + _hasControl );
+            static bool PlayerHasControl()
+            {
+                return LocalPlayer.FpCharacter._terrainOrFlatContact == true;
+            }
+            //Wait until player has control
+            yield return CustomWaitUntil.WaitUntil(new Func<bool>(PlayerHasControl));
+            _hasControl = true;
+            //RLog.Msg("terrainOrflatcontact true, set _hasControl to " + _hasControl);
+            if (_firstStart == true)
+            {
+                SettingsRegistry.CreateSettings(this, null, typeof(Config), callback: OnSettingsUiClosed);
+            }
+            Config.UpdateSettings();
+            _firstStart = false;
+        }
+        else
+        {
+            //RLog.Msg("_hasControl is" + _hasControl);
+            if (_firstStart == true)
+            {
+                SettingsRegistry.CreateSettings(this, null, typeof(Config), callback: OnSettingsUiClosed);
+            }
+            Config.UpdateSettings();
+            _firstStart = false;
+        }
     }
 
 
@@ -78,8 +120,9 @@ public class AutoSaver : SonsMod
         {
             if (!_firstStart)
             {
-
+                
                 _returnedToTitle = true;
+                _hasControl = false;
                 // Stopping AutoSave Coroutine on returning to title
                 AutoSaveTimerShouldRun = false;
                 RLog.Msg("Returned to title, disabled auto save");
@@ -94,10 +137,27 @@ public class AutoSaver : SonsMod
 
     private void OnSettingsUiClosed()
     {
-        Config.UpdateSettings();
+        if (!_returnedToTitle)
+        {
+            ClosedPauseMenu().RunCoro();
+        }
+        else
+        {
+            return;
+        }
     }
 
-
+    public static IEnumerator ClosedPauseMenu()
+    {
+        static bool NotInPauseMenu()
+        {
+            //RLog.Msg("waiting until pausemenu isactive returns false");
+            return PauseMenu.IsActive == false;
+        }
+        yield return CustomWaitUntil.WaitUntil(new Func<bool>(NotInPauseMenu));
+        //RLog.Msg("No pause menu instance found, updating settings");
+        Config.UpdateSettings();
+    }
 
     public static void SaveTimerMultiplier(float value)
     {
@@ -182,10 +242,11 @@ public class AutoSaver : SonsMod
         RestoreSaveName().RunCoro();
     }
 
+
     public static void SaveGame()
     {
         //RLog.Msg("SaveGame called");
-        if (LocalPlayer.IsInWorld || Config.AutoSave.Value)
+        if (Config.AutoSave.Value)
         {
             if (Config.AutoSaveOverWrite.Value)
             {

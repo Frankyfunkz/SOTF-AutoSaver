@@ -1,6 +1,8 @@
 using Endnight.Utilities;
 using RedLoader;
+using SonsSdk.Attributes;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using static RedLoader.Coroutines;
 
@@ -10,7 +12,9 @@ public static class Config
 {
 
     public static ConfigCategory Category { get; private set; }
+    [SettingsUiHeader("This option will create a new save file every time it saves", TextAlignmentOptions.MidlineLeft, true)]
     public static ConfigEntry<bool> AutoSave { get; private set; }
+    [SettingsUiHeader("With OverWrite also enabled will create a single save file which it will always overwrite", TextAlignmentOptions.MidlineLeft, true)]
     public static ConfigEntry<bool> AutoSaveOverWrite { get; private set; }
     public static ConfigEntry<string> SaveTimer { get; private set; }
     public static Dictionary<string, float> TimerOptions = new()
@@ -51,8 +55,6 @@ public static class Config
             //RLog.Msg("Is Coroutine running: " + AutoSaver.CoroIsRunning);
             AutoSaver.SetAutoSave(AutoSave.Value);
         }
-
-        
     }
 
 
